@@ -4,6 +4,8 @@ The repository contains solutions to exercises and code for the final project.
 
 This is a test
 
+Now okay
+
 what happened?
 
 Author: Thomas Borup Ravnborg
