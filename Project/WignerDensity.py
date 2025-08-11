@@ -49,12 +49,13 @@ def rho_to_Wigner(rho, xgrid, pgrid):
     # Initialize Wigner function
     W = np.zeros(X.shape, dtype=complex)
     # Calculate Wigner function as sum over density matrix elements with Wmn
-    for m, n in np.ndindex(dim, dim):
-        W += rho[m, n] * Wmn(X, P, m, n)
-    return W
+    for m in range(dim):
+        for n in range(dim):
+            W += rho[m, n] * Wmn(X, P, m, n)
+    return np.real(W)
 
 # Defining function to convert from Wigner function to density matrix
-def Wigner_to_rho(W, xgrid, pgrid, dim):
+def Wigner_to_rho(W, xgrid, pgrid, dim, trapz=True):
     """
     Convert Wigner function to density matrix (vectorized).
     Inputs:
@@ -71,7 +72,15 @@ def Wigner_to_rho(W, xgrid, pgrid, dim):
     # Initialize density matrix
     rho = np.zeros((dim, dim), dtype=complex)
     # Calculate density matrix as integrals over Wigner function with Wmn
-    for m, n in np.ndindex(dim, dim):
-        integrand = W * Wmn(X, P, m, n)
-        rho[m, n] = 2 * np.pi * np.sum(integrand) * dx * dp
+    for m in range(dim):
+        for n in range(dim):
+            integrand = W * Wmn(X, P, n, m)
+            if trapz:
+                inner = np.trapezoid(integrand, pgrid, axis=1)
+                integral = np.trapezoid(inner, xgrid, axis=0)
+                rho[m, n] = 2 * np.pi * integral
+            else:
+                rho[m, n] = 2 * np.pi * np.sum(integrand) * dx * dp
+    # Enforce Hermiticity of the density matrix
+    rho = 0.5*(rho + rho.conj().T)
     return rho
